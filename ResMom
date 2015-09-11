@@ -1,0 +1,42 @@
+#!/usr/bin/python3
+import sys
+import os
+import time
+def get_child_process(pid):
+	cpids=''.join(os.popen('''ps -a -o pid,ppid | awk '$2=="%s"{print $1}' ''' % (pid)).readlines()).strip("\n").split('\n')
+	return cpids
+def planish(L):
+	return sum(map(planish,L),[]) if isinstance(L,list) else [L]
+	
+def get_pipe_pids(pid):
+	cpids=[[pid,],]
+	i=0
+	while True:
+		if len(cpids) > i:
+			for j in cpids[i]:		
+				tmp=get_child_process(j)
+				if tmp[0]:
+					if i+1 > len(cpids):
+						cpids[i+1]=cpids[i]+tmp
+					else:
+						cpids.append(tmp)
+			i+=1
+		else:
+			break
+	ppids = planish(cpids)
+	return ppids
+		
+	 
+datafile = open('ResMom.data', 'w') 
+target_PID=sys.argv[1]
+print('%s(%%)\t%s(kb)\t%s(byte)\t%s(byte)' % ('cpus','mem','io_read','io_write'),file=datafile)
+while(os.popen('''ps -a -o pid | grep -w "%s" ''' % (target_PID)).readline() is not ''):
+	mem,cpus,io_read,io_write=0,0,0,0
+	for pid in get_pipe_pids(target_PID):
+		mem=mem+float(os.popen('''pmap -x %s | awk '$1=="total"{print $3}' ''' % (pid)).readline().strip('\n'))
+		cpus=cpus+float(os.popen('''ps aux | awk '$2=="%s"{print $3}' ''' % (pid)).readline().strip('\n'))
+		io_read=io_read+float(os.popen('''cat /proc/%s/io | sed -nr 's/rchar: ([0-9]+)/\\1/p' ''' % (pid)).readline().strip('\n'))
+		io_write=io_write+float(os.popen('''cat /proc/%s/io | sed -nr 's/wchar: ([0-9]+)/\\1/p' ''' % (pid)).readline().strip('\n'))
+	print("%d\t%d\t%d\t%d" % (cpus,mem,io_read,io_write),file=datafile)
+	time.sleep(float(sys.argv[2]))
+datafile.close()
