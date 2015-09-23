@@ -35,8 +35,9 @@ while(os.popen('''ps -a -o pid | grep -w "%s" ''' % (target_PID)).readline() is 
 	for pid in get_pipe_pids(target_PID):
 		mem=mem+float(os.popen('''pmap -x %s | awk '$1=="total"{print $3}' ''' % (pid)).readline().strip('\n'))
 		cpus=cpus+float(os.popen('''ps aux | awk '$2=="%s"{print $3}' ''' % (pid)).readline().strip('\n'))
-		io_read=io_read+float(os.popen('''cat /proc/%s/io | sed -nr 's/rchar: ([0-9]+)/\\1/p' ''' % (pid)).readline().strip('\n'))
-		io_write=io_write+float(os.popen('''cat /proc/%s/io | sed -nr 's/wchar: ([0-9]+)/\\1/p' ''' % (pid)).readline().strip('\n'))
+		if os.path.exists('/proc/%s/io' % (pid)):
+			io_read=io_read+float(os.popen('''cat /proc/%s/io | sed -nr 's/rchar: ([0-9]+)/\\1/p' ''' % (pid)).readline().strip('\n'))
+			io_write=io_write+float(os.popen('''cat /proc/%s/io | sed -nr 's/wchar: ([0-9]+)/\\1/p' ''' % (pid)).readline().strip('\n'))
 	print("%d\t%d\t%d\t%d" % (cpus,mem,io_read,io_write),file=datafile)
 	time.sleep(float(sys.argv[2]))
 datafile.close()
