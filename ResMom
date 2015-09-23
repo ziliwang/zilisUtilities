@@ -39,5 +39,6 @@ while(os.popen('''ps -a -o pid | grep -w "%s" ''' % (target_PID)).readline() is 
 			io_read=io_read+float(os.popen('''cat /proc/%s/io | sed -nr 's/rchar: ([0-9]+)/\\1/p' ''' % (pid)).readline().strip('\n'))
 			io_write=io_write+float(os.popen('''cat /proc/%s/io | sed -nr 's/wchar: ([0-9]+)/\\1/p' ''' % (pid)).readline().strip('\n'))
 	print("%d\t%d\t%d\t%d" % (cpus,mem,io_read,io_write),file=datafile)
+	print("%d\t%d\t%d\t%d" % (cpus,mem,io_read,io_write))
 	time.sleep(float(sys.argv[2]))
 datafile.close()
