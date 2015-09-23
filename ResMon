@@ -1,10 +1,24 @@
-#!/usr/bin/python3
+#!/usr/bin/env python
+
+#filename: ResMon.py3
+# encoding: utf-8
+
 import sys
 import os
 import time
+
+use_message = '''
+ResMon monitoring the usage of computational resource of a specified process set (pipeline).
+Useage:
+	ResMon <pid> <time[s]>
+
+This will output ResMon.data in current path
+'''
+
 def get_child_process(pid):
 	cpids=''.join(os.popen('''ps -a -o pid,ppid | awk '$2=="%s"{print $1}' ''' % (pid)).readlines()).strip("\n").split('\n')
 	return cpids
+
 def planish(L):
 	return sum(map(planish,L),[]) if isinstance(L,list) else [L]
 	
@@ -26,8 +40,8 @@ def get_pipe_pids(pid):
 	ppids = planish(cpids)
 	return ppids
 		
-	 
-datafile = open('ResMom.data', 'w') 
+def main
+	 datafile = open('ResMon.data', 'w') 
 target_PID=sys.argv[1]
 print('%s(%%)\t%s(kb)\t%s(byte)\t%s(byte)' % ('cpus','mem','io_read','io_write'),file=datafile)
 while(os.popen('''ps -a -o pid | grep -w "%s" ''' % (target_PID)).readline() is not ''):
