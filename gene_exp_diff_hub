@@ -1,0 +1,80 @@
+import sys
+import copy
+from nested_dict import nested_dict
+import re
+f1=sys.argv[1]
+f2=sys.argv[2]
+fh1=open(f1,'r')
+fh2=open(f2,'r')
+fh3=open(sys.argv[3],'r')
+fh4=open('data.out','w+')
+fh5=open(sys.argv[4],'r')
+fh6=open(sys.argv[5],'r')
+exp=nested_dict()
+fh1.readline()
+while True:
+	fh1line = fh1.readline()
+	if fh1line:
+		exp[fh1line.split('\t')[0]][fh1line.split('\t')[1]][fh1line.split('\t')[2]]=fh1line.split('\t')[6]
+	else:
+		break
+fh1.close()
+exp_dic=copy.deepcopy(exp.to_dict())
+class_code={}
+while True:
+	fh3line = fh3.readline()
+	if fh3line:
+		class_code[fh3line.split(' ')[0]]=fh3line.strip('\n').split(' ')[1]
+	else:
+		break
+ref_info={}
+while True:
+	fh5line = fh5.readline().strip('\n')
+	if fh5line:
+		ref_info[fh5line.split(' ')[3]]=fh5line.split(' ')
+	else:
+		break
+our_info={}
+while True:
+	fh6line = fh6.readline().strip('\n')
+	if fh6line:
+		our_info[fh6line.split(' ')[0]]=fh6line.split(' ')
+	else:
+		break
+fh3.close()
+fh5.close()
+fh6.close()
+nstr,cstr=[],[]
+for i in range(0,15):
+	nstr = nstr + ['n'+str(i)]
+	cstr = cstr + ['c'+str(i)]
+print('\t'.join([fh2.readline().strip('\n')] + ['class_code','gene_id','gene_type','gene_status','gene_name'] + nstr + cstr ) )
+while True:
+	fh2line = fh2.readline()
+	n_list,c_list=[],[]
+	if fh2line:
+		n_list += [exp_dic[fh2line.split('\t')[1]]['normal'][key] for key in sorted(exp_dic[fh2line.split('\t')[1]]['normal'].keys())]
+		c_list += [exp_dic[fh2line.split('\t')[1]]['cancer'][key] for key in sorted(exp_dic[fh2line.split('\t')[1]]['cancer'].keys())]
+		info_add=''
+		if re.search(r'[jc=]',class_code[fh2line.split('\t')[1]]):
+			if re.search(r'[,]',fh2line.split('\t')[2]):
+				id_item=[]
+				type_item=[]
+				status_item=[]
+				name_item=[]
+				for list_key in range(0,len(fh2line.split('\t')[2].split(','))):
+					id_item += [ref_info[fh2line.split('\t')[2].split(',')[list_key]][0]]
+					type_item += [ref_info[fh2line.split('\t')[2].split(',')[list_key]][1]]
+					status_item += [ref_info[fh2line.split('\t')[2].split(',')[list_key]][2]]
+					name_item += [ref_info[fh2line.split('\t')[2].split(',')[list_key]][3]]
+				info_add = [','.join(id_item),','.join(type_item),','.join(status_item),','.join(name_item)]
+			else:	
+				info_add=ref_info[fh2line.split('\t')[2]]
+		elif re.search(r'[uix]',class_code[fh2line.split('\t')[1]]):
+			info_add=our_info[fh2line.split('\t')[1]]
+		else:
+			info_add=['null','null','null','null']
+		print('\t'.join([fh2line.strip('\n')] + [class_code[fh2line.split('\t')[1]]] + info_add + n_list + c_list))
+	else:
+		break
+fh2.close()
