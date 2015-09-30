@@ -22,9 +22,9 @@ additional info:
 	 XLOC_012521	  =,j,=
 
 	2. <ref_gene_info> <predicted_gene_info> format:
-	 ---------------------------------------		
+	 -----------------------------------------------		
 	 gene_id	gene_type gene_status gene_name
-	 ---------------------------------------		
+	 -----------------------------------------------		
 	 ENSG00000222623.1 snRNA KNOWN RNU6-1100P	|
 	 ENSG00000241599.1 lincRNA NOVEL RP11-34P13.9	| <ref_gene_info>
 	 ENSG00000228463.4 lincRNA NOVEL AP006222.2	|
