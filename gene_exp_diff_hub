@@ -1,67 +1,96 @@
+#!/usr/bin/env python3
+
+#filename: gene_exp_diff_hub.py3
+# encoding: utf-8
+
 import sys
 import copy
 from nested_dict import nested_dict
 import re
-f1=sys.argv[1]
-f2=sys.argv[2]
-fh1=open(f1,'r')
-fh2=open(f2,'r')
-fh3=open(sys.argv[3],'r')
-fh4=open('data.out','w+')
-fh5=open(sys.argv[4],'r')
-fh6=open(sys.argv[5],'r')
-exp=nested_dict()
-fh1.readline()
+
+Usage_info='''
+gene_exp_diff_hub joins the information of reference genes and predicted genes by CNCI, and the class_code of cuffmerege, and expression of each locus, and the gene_exp.diff file into a simple table.
+
+Usage:
+	gene_exp_diff_hub <genes.read_group_tracking> <gene_exp.diff> <class_code_info> <ref_gene_info> <predicted_gene_info> > output.csv
+
+additional info:
+	1. <class_code_ifo> format:
+	 ---------------------------
+	 cufflink_id	class_code
+	 ---------------------------
+	 XLOC_012521	  =,j,=
+
+	2. <ref_gene_info> <predicted_gene_info> format:
+	 ---------------------------------------		
+	 gene_id	gene_type gene_status gene_name
+	 ---------------------------------------		
+	 ENSG00000222623.1 snRNA KNOWN RNU6-1100P	|
+	 ENSG00000241599.1 lincRNA NOVEL RP11-34P13.9	| <ref_gene_info>
+	 ENSG00000228463.4 lincRNA NOVEL AP006222.2	|
+	 XLOC_001931 antisense_lncRNA predicted antisense_DPYD	|
+	 XLOC_001955 antisense_lncRNA predicted antisense_SASS6	| <predicted_gene_info>
+'''
+def err_usage(usage_info):
+	print(usage_info)
+	exit(0)
+
+next if len(sys.argv) == 6 else err_usage(Usage_info)
+#files
+fh1 = open(sys.argv[1],'r')
+fh2 = open(sys.argv[2],'r')
+fh3 = open(sys.argv[3],'r')
+fh4 = open(sys.argv[4],'r')
+fh5 = open(sys.argv[5],'r')
+exp = nested_dict()	#nested dict lib
+fh1.readline()		#filter the first line
 while True:
 	fh1line = fh1.readline()
 	if fh1line:
-		exp[fh1line.split('\t')[0]][fh1line.split('\t')[1]][fh1line.split('\t')[2]]=fh1line.split('\t')[6]
+		exp[fh1line.split('\t')[0]][fh1line.split('\t')[1]][fh1line.split('\t')[2]]=fh1line.split('\t')[6]	#store FPKM into exp dict
 	else:
 		break
 fh1.close()
-exp_dic=copy.deepcopy(exp.to_dict())
-class_code={}
+exp_dic=copy.deepcopy(exp.to_dict())	#exp trans to basic dict obj and then deepcopy to exp_dic
+class_code={}		#class_code dict for class_code
 while True:
 	fh3line = fh3.readline()
 	if fh3line:
-		class_code[fh3line.split(' ')[0]]=fh3line.strip('\n').split(' ')[1]
-	else:
-		break
-ref_info={}
-while True:
-	fh5line = fh5.readline().strip('\n')
-	if fh5line:
-		ref_info[fh5line.split(' ')[3]]=fh5line.split(' ')
-	else:
-		break
-our_info={}
-while True:
-	fh6line = fh6.readline().strip('\n')
-	if fh6line:
-		our_info[fh6line.split(' ')[0]]=fh6line.split(' ')
+		class_code[fh3line.split(' ')[0]]=fh3line.strip('\n').split(' ')[1]  #store to class_code dict
 	else:
 		break
 fh3.close()
+ref_info={}	#store reference gene info.
+while True:
+	fh4line = fh4.readline().strip('\n')
+	if fh4line:
+		ref_info[fh4line.split(' ')[3]]=fh4line.split(' ')   #value type is list
+	else:
+		break
+fh4.close()
+our_info={}	#store predicted gene info.
+while True:
+	fh5line = fh5.readline().strip('\n')
+	if fh5line:
+		our_info[fh5line.split(' ')[0]]=fh5line.split(' ')	#value type is list
+	else:
+		break
 fh5.close()
-fh6.close()
-nstr,cstr=[],[]
+nstr,cstr=[],[]	#sample id list
 for i in range(0,15):
 	nstr = nstr + ['n'+str(i)]
 	cstr = cstr + ['c'+str(i)]
-print('\t'.join([fh2.readline().strip('\n')] + ['class_code','gene_id','gene_type','gene_status','gene_name'] + nstr + cstr ) )
+print('\t'.join([fh2.readline().strip('\n')] + ['class_code','gene_id','gene_type','gene_status','gene_name'] + nstr + cstr ) ) #headline
 while True:
 	fh2line = fh2.readline()
-	n_list,c_list=[],[]
+	n_list,c_list=[],[]	#define and clear
 	if fh2line:
-		n_list += [exp_dic[fh2line.split('\t')[1]]['normal'][key] for key in sorted(exp_dic[fh2line.split('\t')[1]]['normal'].keys())]
+		n_list += [exp_dic[fh2line.split('\t')[1]]['normal'][key] for key in sorted(exp_dic[fh2line.split('\t')[1]]['normal'].keys())]	#FPKM in each samples
 		c_list += [exp_dic[fh2line.split('\t')[1]]['cancer'][key] for key in sorted(exp_dic[fh2line.split('\t')[1]]['cancer'].keys())]
-		info_add=''
+		info_add=''	#define and clear
 		if re.search(r'[jc=]',class_code[fh2line.split('\t')[1]]):
 			if re.search(r'[,]',fh2line.split('\t')[2]):
-				id_item=[]
-				type_item=[]
-				status_item=[]
-				name_item=[]
+				id_item,type_item,status_item,name_item=[],[],[],[] 
 				for list_key in range(0,len(fh2line.split('\t')[2].split(','))):
 					id_item += [ref_info[fh2line.split('\t')[2].split(',')[list_key]][0]]
 					type_item += [ref_info[fh2line.split('\t')[2].split(',')[list_key]][1]]
