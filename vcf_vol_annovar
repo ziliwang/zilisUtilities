@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+
+# filename: Add_Uniq_Score.py3
+# encoding: utf-8
+
+import os
+import sys
+import argparse
+
+def parse_args():
+    des_info='''
+function:
+  vcf volume annotation by annovar(only support hg19).
+    '''
+    epilog_info='''
+Author     : Zili Wang
+Contact    : wzlnot@gmail.com
+ '''
+    parser = argparse.ArgumentParser(description=des_info,epilog=epilog_info,formatter_class=argparse.RawDescriptionHelpFormatter);
+    parser.add_argument('merged_list_file', type=str, help='vcf list file, Abusolute Path need') #merged.gtf arg
+    parser.add_argument('-o','--output_prefix',type=str,help='output file prefix[./mytest]',default='./mytest')
+    parser.add_argument('-A','--annovar_root',type=str,help='annovar root dir',required=True)
+    parser.add_argument('-D','--annovar_db',type=str,help='annovar db path',required=True)
+    parser.add_argument('-r','--remove',action='store_true',help='remove temporary files[False]',default=False)
+    args = parser.parse_args()
+    return args
+
+class vcf:
+    def __init__(self,path):
+        self.path = path
+    def annovar_ann(self,args):
+        os.system('''%s/table_annovar.pl %s %s -buildver hg19 -remove -protocol refGene -operation g -nastring . -vcfinput''' % (args.annovar_root, self.path, args.annovar_db))
+        op_path = self.path + '.hg19_multianno.txt'
+        output_tmp = open(op_path,'r').readlines()
+        if args.remove:
+            os.system(''' rm -f %s.*''' % (self.path))
+        p, f = os.path.split(self.path)
+        name, ext = os.path.splitext(f)
+        output = list(map(lambda X: name + '\t' + X , output_tmp))
+        return(output)
+
+def main():
+    args = parse_args()
+    f = open(args.merged_list_file,'r')
+    if os.path.isfile(args.output_prefix + '.vao'):
+        os.remove(args.output_prefix + '.vao')
+    out = open(args.output_prefix + '.vao', 'w+' )
+    while True:
+        file_line = f.readline().strip('\n')
+        if(file_line):
+            out.writelines(vcf(file_line).annovar_ann(args))
+            #for i in vcf(file_line).annovar_ann(args):
+            #   out.(i,end='')
+        else:
+            break
+    f.close()
+if __name__ == '__main__':
+    main()
