@@ -31,28 +31,91 @@ class vcf:
     def annovar_ann(self,args):
         os.system('''%s/table_annovar.pl %s %s -buildver hg19 -remove -protocol refGene -operation g -nastring . -vcfinput''' % (args.annovar_root, self.path, args.annovar_db))
         op_path = self.path + '.hg19_multianno.txt'
-        output_tmp = open(op_path,'r').readlines()
+        output = open(op_path,'r').readlines()
         if args.remove:
             os.system(''' rm -f %s.*''' % (self.path))
         p, f = os.path.split(self.path)
         name, ext = os.path.splitext(f)
-        output = list(map(lambda X: name + '\t' + X , output_tmp))
-        return(output)
+        outlist = list(map(lambda X: name + '\t' + X , output[1:]))
+        return(outlist)
+
+def vao_stator(outfile):
+    #0,name;1,Chr;2,Strat;3,End;4,Ref;5,Alt;6,Func.refGene;7,Gene.refGene;8,GeneDetail.refGene;9,ExonicFunc.refGene;10,AAChange.refGene;11,Otherinfo
+    #use:0-name,9-exonicfunc[.,ExonicFunc.refGene,frameshift deletion,frameshift insertion,nonframeshift deletion,nonsynonymous SNV,stopgain,stoploss,synonymous SNV]
+    #use:7-gene[names],6-func.ref[intergenic,exonic,intronic,ncRNA_exonic,splicing,UTR3]
+    f=open(outfile,'r')
+    vao_list = f.readlines()
+    vao = vao_list[1:]
+    #sample number && mutation number
+    sample_num = len(set([i.split("\t")[0] for i in vao]))
+    total_mut_num = len(vao)
+    #mutation site type
+    mut_site = {}
+    mut_site_list = [i.split("\t")[6] for i in vao]
+    for i in set(mut_site_list):
+        mut_site[i] = mut_site_list.count(i)
+    #mutation type
+    mut_type = {}
+    mut_type_list = [i.split("\t")[9] for i in vao]
+    for i in set(mut_type_list):
+        mut_type[i] = mut_type_list.count(i)
+
+    #write summ
+    if os.path.isfile(outfile + '.summary'):
+        os.remove(outfile + '.summary')
+    f_sum = open(outfile + '.summary', 'w+' )
+    f_sum.writelines("%s:%10s\n"  %("Samples Num.", sample_num))
+    f_sum.writelines("%s:%10s\n\n"  %("Mutation Num.", total_mut_num))
+    
+    #site
+    f_sum.writelines('%s\t%15s\t%15s\t%15s\t%15s\t%15s\t%15s\t%15s\n' % ('site','intergenic','exonic','intronic','ncRNA_exonic','splicing','UTR3','UTR5'))
+    f_sum.write('%s\t' % ('num.'))
+    for i in ['intergenic','exonic','intronic','ncRNA_exonic','splicing','UTR3','UTR5']:
+        if i in mut_site:
+            f_sum.write("%15s\t" %(mut_site[i]))
+        else:
+            f_sum.write("%15s\t" %('0'))
+    f_sum.write('\n\n')
+       
+    #type
+    f_sum.writelines("\t".join(['mutation type'] + [j for j in sorted(mut_type.keys())]) + '\n')
+    f_sum.writelines("\t".join(['number'] + [str(mut_type[j]) for j in sorted(mut_type.keys())]) + '\n')
+
+    #detail for guid
+    #sample #mutation #gene:num,gene:num....
+    from nested_dict import nested_dict
+    import copy
+    if os.path.isfile(outfile + '.type.detail'):
+        os.remove(outfile + '.type.detail')
+    f_type = open(outfile + '.type.detail','w+' )
+    n_dic = nested_dict()
+    for i in vao:
+        if n_dic[i.split('\t')[0]][i.split('\t')[9]][i.split('\t')[7]]:
+            n_dic[i.split('\t')[0]][i.split('\t')[9]][i.split('\t')[7]] +=1
+        else:
+            n_dic[i.split('\t')[0]][i.split('\t')[9]][i.split('\t')[7]] = 1
+    dic = copy.deepcopy(n_dic.to_dict())
+    for i in sorted(dic.keys()):
+        for j in sorted(dic[i].keys()):
+            f_type.writelines('%s\t%20s\t%s\n' %(i, j, ','.join([ n+':'+ str(dic[i][j][n]) for n in sorted(dic[i][j].keys())])))
+        
+
 
 def main():
     args = parse_args()
+    head = 'ID\tChr\tStrat\tEnd\tRef\tAlt\tFunc.refGene\tGene.refGene\tGeneDetail.refGene\tExonicFunc.refGene\tAAChange.refGene\tOtherinfo\n'
     f = open(args.merged_list_file,'r')
     if os.path.isfile(args.output_prefix + '.vao'):
         os.remove(args.output_prefix + '.vao')
     out = open(args.output_prefix + '.vao', 'w+' )
+    out.writelines(head)
     while True:
         file_line = f.readline().strip('\n')
         if(file_line):
             out.writelines(vcf(file_line).annovar_ann(args))
-            #for i in vcf(file_line).annovar_ann(args):
-            #   out.(i,end='')
         else:
             break
     f.close()
+    vao_stator(args.output_prefix + '.vao')
 if __name__ == '__main__':
     main()
