@@ -9,12 +9,19 @@ import argparse
 
 def parse_args():
     des_info='''
-function:
-  vcf volume annotation by annovar(only support hg19).
+FUNCTION:
+	vcf volume annotation by annovar(only support hg19).
     '''
     epilog_info='''
-Author     : Zili Wang
-Contact    : wzlnot@gmail.com
+Author:
+	Zili Wang
+Contact: 
+	wzlnot@gmail.com
+STATE: 
+	vcf_vol_annovar is free software: you can redistribute it and/or
+	modify it under the terms of the GNU General Public License as published 
+	by the Free Software Foundation, either version 3 of the License, or (at 
+	your option) any later version.
  '''
     parser = argparse.ArgumentParser(description=des_info,epilog=epilog_info,formatter_class=argparse.RawDescriptionHelpFormatter);
     parser.add_argument('merged_list_file', type=str, help='vcf list file, Abusolute Path need') #merged.gtf arg
