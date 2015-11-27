@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+
+# filename: SeqExtractor.py3
+# encoding: utf-8
+
+import argparse
+import sys
+from Bio import SeqIO
+
+class LocalError():
+    def __init__(self, arg):
+        self.args = arg
+
+def parse_args():
+    des_info = 'A Widget to extract the target sequence.'
+    epilog_info='''Written by Zili Wang. STATE: SeqExtractor is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+    If you have any problem or suggestions about this program, please mail to: wzlnot@gmail.com.'''
+    parser = argparse.ArgumentParser(description=des_info,epilog=epilog_info);
+    parser.add_argument('fasta', type=str, help='fasta file')
+    parser.add_argument('chr', type=str, help='chr name')
+    parser.add_argument('start',type=int, help='start position')
+    parser.add_argument('end',type=int, help='end position')
+    parser.add_argument('strand',type=str, choices=['+','-'])
+    parser.add_argument('seq_name',type=str, help ='the name for wanted sequence')
+    args = parser.parse_args()
+    return args
+def main():
+    args = parse_args()
+    args.start > args.end and sys.exit('Error: start > end\nexit..')
+    handle = open(args.fasta)
+    fasta_dict = SeqIO.to_dict(SeqIO.parse(handle,"fasta"))
+    handle.close()
+    if args.chr in fasta_dict.keys():
+        if args.strand == '+':
+            print('>%s %s:%s-%s%s\n%s' % (args.name, args.chr, args.start, args.end, args.strand, fasta_dict[args.chr][(args.start-1):args.end].seq))
+        else:
+            print('>%s %s:%s-%s%s\n%s' % (args.name, args.chr, args.start, args.end, args.strand, fasta_dict[args.chr][(args.start-1):args.end].reverse_complement().seq))
+    else:
+        sys.exit('%s has no scaff: %s\nexit...' % (args.fasta, args.chr))
+if __name__ == '__main__':
+    main()
