@@ -1,11 +1,12 @@
 ##SeqExtractor
-#####Description
-SeqExtractor is a tool to extractor the target regoin of NA or AA sequence. 
-#####Algorithm
+#####![Des](icos/date.png)  Description
+SeqExtractor is a tool to extractor the target regoin of NA or AA sequence.
+#####![Alg](icos/gavel.png)  Algorithm
 BioPython SeqIO module
-#####Input
+#####![samll](icos/small.png) Input and Output
+######input
 fasta file
-#####Output
+######output
 standard output, fasta formate, like:
 ```
 >ADH1A:2000 chr4:100212186-100214185+
