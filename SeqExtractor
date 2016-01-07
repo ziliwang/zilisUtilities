@@ -26,15 +26,15 @@ def parse_args():
     return args
 def main():
     args = parse_args()
-    args.start > args.end and sys.exit('Error: start > end\nexit..')
+    assert args.start <= args.end
     handle = open(args.fasta)
     fasta_dict = SeqIO.to_dict(SeqIO.parse(handle,"fasta"))
     handle.close()
     if args.chr in fasta_dict.keys():
         if args.strand == '+':
-            print('>%s %s:%s-%s%s\n%s' % (args.name, args.chr, args.start, args.end, args.strand, fasta_dict[args.chr][(args.start-1):args.end].seq))
+            print('>%s %s:%s-%s%s\n%s' % (args.seq_name, args.chr, args.start, args.end, args.strand, fasta_dict[args.chr][(args.start-1):args.end].seq))
         else:
-            print('>%s %s:%s-%s%s\n%s' % (args.name, args.chr, args.start, args.end, args.strand, fasta_dict[args.chr][(args.start-1):args.end].reverse_complement().seq))
+            print('>%s %s:%s-%s%s\n%s' % (args.seq_name, args.chr, args.start, args.end, args.strand, fasta_dict[args.chr][(args.start-1):args.end].reverse_complement().seq))
     else:
         sys.exit('%s has no scaff: %s\nexit...' % (args.fasta, args.chr))
 if __name__ == '__main__':
