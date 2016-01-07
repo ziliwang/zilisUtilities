@@ -1,4 +1,5 @@
 ##SeqExtractor
+<i class="icon-file"></i> 
 #####Description
 SeqExtractor is a tool to extractor the target regoin of NA or AA sequence. 
 #####Algorithm
