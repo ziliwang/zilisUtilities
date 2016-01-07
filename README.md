@@ -1,3 +1,3 @@
-| Name | Description | Detail |
+| Name | Description |
 |:---:|:-----|:-----|
-|**ResMon**|a tool to monitor the resources occupation of a process.|[Details](/readmes/ResMon.md)
+|[**ResMon**]](/readmes/ResMon.md)|a tool to monitor the resources occupation of a process.|
