@@ -11,6 +11,7 @@ ResMon is a tool to monitor the resources occupation of a process, include the c
 #####![samll](icos/small.png) Input and Output
 **input**
 target process id
+
 **output**
 the resource usage of target pid and its child processes in specified interval. Like:
 ```
