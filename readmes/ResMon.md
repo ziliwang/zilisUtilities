@@ -3,7 +3,7 @@
 ResMon is a tool to monitor the resources occupation of a process, include the child processes. The resources include memory, IO, and CPU.
 #####Algorithm
 | resource | algorithm |
-|:-----: | ----:----- |
+|:-----: | :---------: |
 | memory   | linux command pmap |
 | cpus | linux command ps |
 | IO | linux process Io file |
