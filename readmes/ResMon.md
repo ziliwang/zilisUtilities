@@ -9,7 +9,7 @@ ResMon is a tool to monitor the resources occupation of a process, include the c
 | IO | linux process Io file |
 | aggregate | recursive addition of all child processes(produced by target process) , and the relationship bettwen process is ruled by linux command ps | 
 #####Output
-the resources causing by target pid in specified time.
+the resource usage of target pid and its child processes in specified interval.
 ```
 cpus(%) mem(kb) io_read(byte)   io_write(byte)  
 198     11776088        46644326647     1205  
