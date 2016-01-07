@@ -1,17 +1,9 @@
-#Contents
- 1. ResMon
- 1. STGffparser
- 1. gene_exp_diff_hub
- 1. vcf_vol_annovar
- 1. SeqExtractor
-
----
 ##ResMon
 #####Description
 ResMon is a tool to monitor the resources occupation of a process, include the child processes. The resources include memory, IO, and CPU.
 #####Algorithm
 | resource | algorithm |
-| -------- | --------- |
+| ---:----- | ----:----- |
 | memory   | linux command pmap |
 | cpus | linux command ps |
 | IO | linux process Io file |
@@ -30,4 +22,4 @@ cpus(%) mem(kb) io_read(byte)   io_write(byte)
 198     14906232        66741794085     1205  
 198     15483456        69228065898     1205  
 ```
-[readmes/ResMon.md]
+
