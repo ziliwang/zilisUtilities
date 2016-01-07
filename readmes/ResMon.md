@@ -1,7 +1,7 @@
 ##ResMon
 #####![Des](icos/date.png)Description
 ResMon is a tool to monitor the resources occupation of a process, include the child processes. The resources include memory, IO, and CPU.
-#####Algorithm
+#####![Alg](icos/gavel.png)Algorithm
 | resource | algorithm |
 |:-----: | :--------- |
 | memory   | linux command pmap |
