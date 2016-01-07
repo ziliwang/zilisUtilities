@@ -3,7 +3,7 @@
 SeqExtractor is a tool to extractor the target regoin of NA or AA sequence. 
 #####Algorithm
 BioPython SeqIO module
-#####input
+#####Input
 fasta file
 #####Output
 standard output, fasta formate, like:
