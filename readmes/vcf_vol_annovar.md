@@ -1,4 +1,4 @@
-##SeqExtractor
+##vcf_vol_annovar
 #####![Des](icos/date.png)  Description
 vcf_vol_annovar is a tools for vcf volume annotation by annovar(only support hg19), and joining mutations of each sample into a single table.
 #####![Alg](icos/gavel.png)  Algorithm
