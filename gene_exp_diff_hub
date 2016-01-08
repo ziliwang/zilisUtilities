@@ -7,20 +7,21 @@ import sys
 import copy
 from nested_dict import nested_dict
 import re
+import argparse
 
-Usage_info='''
-gene_exp_diff_hub joins the information of reference genes and predicted genes by CNCI, and the class_code of cuffmerege, and expression of each locus, and the gene_exp.diff file into a simple table.
-
-Usage:
-	gene_exp_diff_hub <genes.read_group_tracking> <gene_exp.diff> <class_code_info> <ref_gene_info> <predicted_gene_info> > output.csv
-
-additional info:
-	1. <class_code_ifo> format:
+def parse_args():
+    des_info='''
+FUNCTION:
+	gene_exp_diff_hub joins the information of reference genes and predicted genes by CNCI, and the class_code of cuffmerege, and
+expression of each locus, and the gene_exp.diff file into a simple table.
+    '''
+    epilog_info='''
+Additional Info:
+    1. <class_code_ifo> format:
 	 ---------------------------
 	 cufflink_id	class_code
 	 ---------------------------
 	 XLOC_012521	  =,j,=
-
 	2. <ref_gene_info> <predicted_gene_info> format:
 	 -----------------------------------------------		
 	 gene_id	gene_type gene_status gene_name
@@ -30,80 +31,103 @@ additional info:
 	 ENSG00000228463.4 lincRNA NOVEL AP006222.2	|
 	 XLOC_001931 antisense_lncRNA predicted antisense_DPYD	|
 	 XLOC_001955 antisense_lncRNA predicted antisense_SASS6	| <predicted_gene_info>
-'''
-def err_usage(usage_info):
-	print(usage_info)
-	exit(0)
+Author:
+	Zili Wang
+Contact: 
+	wzlnot@gmail.com
+STATE: 
+	gene_exp_diff_hub is free software: you can redistribute it and/or
+	modify it under the terms of the GNU General Public License as published 
+	by the Free Software Foundation, either version 3 of the License, or (at 
+	your option) any later version.
+ '''
+    parser = argparse.ArgumentParser(description=des_info,epilog=epilog_info,formatter_class=argparse.RawDescriptionHelpFormatter);
+    parser.add_argument('-F','--cuffdiff', type=str, help='cuffdiff outdir path',required=True) 
+    parser.add_argument('-c','--classcode',type=str,help='class code file',required=True)
+    parser.add_argument('-r','--ref',type=str,help='reference gene model',required=True)
+    parser.add_argument('-p','--preticted',type=str,help='preticted gene model',required=True)
+    parser.add_argument('-t','--tags',nargs="+",type=str,help='tags in cuffdiff', required=True)
+    parser.add_argument('-s','--samples',nargs="+",type=str,help='samples list, corresponding to 0 to n in read_groups.info',required=True)
+    args = parser.parse_args()
+    return args
 
-next if len(sys.argv) == 6 else err_usage(Usage_info)
-#files
-fh1 = open(sys.argv[1],'r')
-fh2 = open(sys.argv[2],'r')
-fh3 = open(sys.argv[3],'r')
-fh4 = open(sys.argv[4],'r')
-fh5 = open(sys.argv[5],'r')
-exp = nested_dict()	#nested dict lib
-fh1.readline()		#filter the first line
-while True:
-	fh1line = fh1.readline()
-	if fh1line:
-		exp[fh1line.split('\t')[0]][fh1line.split('\t')[1]][fh1line.split('\t')[2]]=fh1line.split('\t')[6]	#store FPKM into exp dict
-	else:
-		break
-fh1.close()
-exp_dic=copy.deepcopy(exp.to_dict())	#exp trans to basic dict obj and then deepcopy to exp_dic
-class_code={}		#class_code dict for class_code
-while True:
-	fh3line = fh3.readline()
-	if fh3line:
-		class_code[fh3line.split(' ')[0]]=fh3line.strip('\n').split(' ')[1]  #store to class_code dict
-	else:
-		break
-fh3.close()
-ref_info={}	#store reference gene info.
-while True:
-	fh4line = fh4.readline().strip('\n')
-	if fh4line:
-		ref_info[fh4line.split(' ')[3]]=fh4line.split(' ')   #value type is list
-	else:
-		break
-fh4.close()
-our_info={}	#store predicted gene info.
-while True:
-	fh5line = fh5.readline().strip('\n')
-	if fh5line:
-		our_info[fh5line.split(' ')[0]]=fh5line.split(' ')	#value type is list
-	else:
-		break
-fh5.close()
-nstr,cstr=[],[]	#sample id list
-for i in range(0,15):
-	nstr = nstr + ['n'+str(i)]
-	cstr = cstr + ['c'+str(i)]
-print('\t'.join([fh2.readline().strip('\n')] + ['class_code','gene_id','gene_type','gene_status','gene_name'] + nstr + cstr ) ) #headline
-while True:
-	fh2line = fh2.readline()
-	n_list,c_list=[],[]	#define and clear
-	if fh2line:
-		n_list += [exp_dic[fh2line.split('\t')[1]]['normal'][key] for key in sorted(exp_dic[fh2line.split('\t')[1]]['normal'].keys())]	#FPKM in each samples
-		c_list += [exp_dic[fh2line.split('\t')[1]]['cancer'][key] for key in sorted(exp_dic[fh2line.split('\t')[1]]['cancer'].keys())]
-		info_add=''	#define and clear
-		if re.search(r'[jc=]',class_code[fh2line.split('\t')[1]]):
-			if re.search(r'[,]',fh2line.split('\t')[2]):
-				id_item,type_item,status_item,name_item=[],[],[],[] 
-				for list_key in range(0,len(fh2line.split('\t')[2].split(','))):
-					id_item += [ref_info[fh2line.split('\t')[2].split(',')[list_key]][0]]
-					type_item += [ref_info[fh2line.split('\t')[2].split(',')[list_key]][1]]
-					status_item += [ref_info[fh2line.split('\t')[2].split(',')[list_key]][2]]
-					name_item += [ref_info[fh2line.split('\t')[2].split(',')[list_key]][3]]
-				info_add = [','.join(id_item),','.join(type_item),','.join(status_item),','.join(name_item)]
-			else:	
-				info_add=ref_info[fh2line.split('\t')[2]]
-		elif re.search(r'[uix]',class_code[fh2line.split('\t')[1]]):
-			info_add=our_info[fh2line.split('\t')[1]]
-		else:
-			info_add=['null','null','null','null']
-		print('\t'.join([fh2line.strip('\n')] + [class_code[fh2line.split('\t')[1]]] + info_add + n_list + c_list))
-	else:
-		break
-fh2.close()
+def main():
+    args = parse_args()
+    gene_hd = open(args.cuffdiff+'/genes.read_group_tracking','r')
+    diff_hd = open(args.cuffdiff+'/gene_exp.diff','r')
+    sample = args.samples
+    class_hd =open(args.classcode,'r')
+    ref_hd =open(args.ref,'r')
+    predicted_hd = open(args.preticted,'r')
+    #store gene expression value into a dict
+    exp = nested_dict()
+    while True:
+        line = gene_hd.readline()
+        if line:
+            #gene -> tags -> samplename = exp_value
+            if line.split('\t')[2] == "replicate": continue
+            exp[line.split('\t')[0]][line.split('\t')[1]][sample[int(line.split('\t')[2])]]=line.split('\t')[6]	#store FPKM into exp dict
+        else:
+            break
+    gene_hd.close()
+    exp_dic=copy.deepcopy(exp.to_dict())	#exp trans to basic dict obj and then deepcopy to exp_dic
+    class_code={}		#class_code dict for class_code
+    while True:
+        line = class_hd.readline()
+        if line:
+            class_code[line.split(' ')[0]]=line.strip('\n').split(' ')[1]  #store to class_code dict
+        else:
+            break
+    class_hd.close()
+    ref_info={}	#store reference gene info.
+    while True:
+        line = ref_hd.readline().strip('\n')
+        if line:
+            ref_info[line.split(' ')[3]]=line.split(' ')   #value type is list
+        else:
+            break
+    ref_hd.close()
+    predicted_info={}	#store predicted gene info.
+    while True:
+        line = predicted_hd.readline().strip('\n')
+        if line:
+    	    predicted_info[line.split(' ')[0]]=line.split(' ')	#value type is list
+        else:
+            break
+    predicted_hd.close()
+    header = ['class_code','gene_id','gene_type','gene_status','gene_name'] 
+    for i in args.tags:
+        for j in sample:
+            header += [i+'.'+j]
+    print('\t'.join([diff_hd.readline().strip('\n')] + header ) ) #headline
+    while True:
+        line = diff_hd.readline()
+        if line:
+            #4,5 for tags
+            (simple_one,simple_two) = (line.split('\t')[4],line.split('\t')[5])
+            simple_one = [exp_dic[line.split('\t')[1]][simple_one][key] for key in sorted(exp_dic[line.split('\t')[1]][simple_one].keys())]	#FPKM in each samples
+            simple_two = [exp_dic[line.split('\t')[1]][simple_two][key] for key in sorted(exp_dic[line.split('\t')[1]][simple_two].keys())]
+            info_add=''	#define and clear
+            if re.search(r'[jc=]',class_code[line.split('\t')[1]]):
+                if re.search(r'[,]',line.split('\t')[2]):
+                    id_item,type_item,status_item,name_item=[],[],[],[] 
+                    for list_key in range(0,len(line.split('\t')[2].split(','))):
+                        id_item += [ref_info[line.split('\t')[2].split(',')[list_key]][0]]
+                        type_item += [ref_info[line.split('\t')[2].split(',')[list_key]][1]]
+                        status_item += [ref_info[line.split('\t')[2].split(',')[list_key]][2]]
+                        name_item += [ref_info[line.split('\t')[2].split(',')[list_key]][3]]
+                        info_add = [','.join(id_item),','.join(type_item),','.join(status_item),','.join(name_item)]
+                else:	
+                    info_add=ref_info[line.split('\t')[2]]
+            elif re.search(r'[uix]',class_code[line.split('\t')[1]]):
+                info_add=predicted_info[line.split('\t')[1]]
+            else:
+                info_add=['null','null','null','null']
+            print('\t'.join([line.strip('\n')] + [class_code[line.split('\t')[1]]] + info_add + simple_one + simple_two))
+        else:
+            break
+    diff_hd.close()
+
+if __name__ == '__main__':
+    main()
+
