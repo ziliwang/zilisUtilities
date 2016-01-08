@@ -6,14 +6,14 @@ integrate gene expression table and annotation table based on gene name.
 #####![samll](icos/small.png) Input and Output
 ######input
 cuffdiff output dir, reference gene, and annotation of cufflinks transfrag.
-<class_code_ifo> format:
+class_code_ifo format:
 ```
 ---------------------------
 cufflink_id	class_code
 ---------------------------
 XLOC_012521	  =,j,=
 ```
-<ref_gene_info> <predicted_gene_info> format:
+ref_gene_info predicted_gene_info format:
 ```
 	 -----------------------------------------------		
 	 gene_id	gene_type gene_status gene_name
