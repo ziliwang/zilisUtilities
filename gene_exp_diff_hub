@@ -46,8 +46,6 @@ STATE:
     parser.add_argument('-c','--classcode',type=str,help='class code file',required=True)
     parser.add_argument('-r','--ref',type=str,help='reference gene model',required=True)
     parser.add_argument('-p','--preticted',type=str,help='preticted gene model',required=True)
-    parser.add_argument('-t','--tags',nargs="+",type=str,help='tags in cuffdiff', required=True)
-    parser.add_argument('-s','--samples',nargs="+",type=str,help='samples list, corresponding to 0 to n in read_groups.info',required=True)
     args = parser.parse_args()
     return args
 
@@ -55,18 +53,19 @@ def main():
     args = parse_args()
     gene_hd = open(args.cuffdiff+'/genes.read_group_tracking','r')
     diff_hd = open(args.cuffdiff+'/gene_exp.diff','r')
-    sample = args.samples
     class_hd =open(args.classcode,'r')
     ref_hd =open(args.ref,'r')
     predicted_hd = open(args.preticted,'r')
+    groups_hd = open(args.cuffdiff+'/read_groups.info','r')
     #store gene expression value into a dict
     exp = nested_dict()
     while True:
         line = gene_hd.readline()
         if line:
-            #gene -> tags -> samplename = exp_value
+            #gene expession data structure
+            #gene name -> condition -> replicate = exp_value
             if line.split('\t')[2] == "replicate": continue
-            exp[line.split('\t')[0]][line.split('\t')[1]][sample[int(line.split('\t')[2])]]=line.split('\t')[6]	#store FPKM into exp dict
+            exp[line.split('\t')[0]][line.split('\t')[1]][line.split('\t')[2]]=line.split('\t')[6]	#store FPKM into exp dict
         else:
             break
     gene_hd.close()
@@ -96,17 +95,34 @@ def main():
             break
     predicted_hd.close()
     header = ['class_code','gene_id','gene_type','gene_status','gene_name'] 
-    for i in args.tags:
-        for j in sample:
-            header += [i+'.'+j]
+#----------------
+#read_groups_info
+#groups_info->condition->replicate->filepath
+    groups={}
+    while True:
+        line = groups_hd.readline().strip('\n')
+        if line:
+            if re.search(r'file\tcondition',line): continue
+            if line.split('\t')[1] not in groups.keys():
+                groups[line.split('\t')[1]] = {}
+            groups[line.split('\t')[1]][line.split('\t')[2]] = line.split('\t')[0]
+        else:
+            break
+    
+    for condition in sorted(groups.keys()):
+        for replicate in sorted(groups[condition]):
+            header += ['.'.join([condition,replicate,groups[condition][replicate]])]
     print('\t'.join([diff_hd.readline().strip('\n')] + header ) ) #headline
     while True:
         line = diff_hd.readline()
         if line:
-            #4,5 for tags
-            (simple_one,simple_two) = (line.split('\t')[4],line.split('\t')[5])
-            simple_one = [exp_dic[line.split('\t')[1]][simple_one][key] for key in sorted(exp_dic[line.split('\t')[1]][simple_one].keys())]	#FPKM in each samples
-            simple_two = [exp_dic[line.split('\t')[1]][simple_two][key] for key in sorted(exp_dic[line.split('\t')[1]][simple_two].keys())]
+            gene_exp_list = []             #expression list
+            for condition in sorted(groups.keys()):
+                for replicate in sorted(groups[condition]):
+                    if condition in [line.split('\t')[4],line.split('\t')[5]]:
+                        gene_exp_list += [exp_dic[line.split('\t')[1]][condition][replicate]]
+                    else:
+                        gene_exp_list += ['-']
             info_add=''	#define and clear
             if re.search(r'[jc=]',class_code[line.split('\t')[1]]):
                 if re.search(r'[,]',line.split('\t')[2]):
@@ -123,11 +139,10 @@ def main():
                 info_add=predicted_info[line.split('\t')[1]]
             else:
                 info_add=['null','null','null','null']
-            print('\t'.join([line.strip('\n')] + [class_code[line.split('\t')[1]]] + info_add + simple_one + simple_two))
+            print('\t'.join([line.strip('\n')] + [class_code[line.split('\t')[1]]] + info_add + gene_exp_list))
         else:
             break
     diff_hd.close()
 
 if __name__ == '__main__':
     main()
-
